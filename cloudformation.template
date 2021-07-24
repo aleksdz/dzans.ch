@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Cloudformation Stack for Amplify-Lambda website resources
+
+Parameters:
+  Repository:
+    Type: String
+    Description: GitHub Repository URL
+
+  Branch:
+    Type: String
+    Description: Branch to deploy
+
+  OauthToken:
+    Type: String
+    Description: GitHub Repository PAC
+    NoEcho: true
+
+  Domain:
+    Type: String
+    Description: Domain name to host application
+
+Resources:
+  AmplifyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - amplify.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: Amplify
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "amplify:*"
+                Resource: "*"
+
+  AmplifyApp:
+    Type: "AWS::Amplify::App"
+    Properties:
+      Name: !Ref Domain
+      Repository: !Ref Repository
+      Description: Amplify Frontend
+      OauthToken: !Ref OauthToken
+      BuildSpec: |-
+        version: 0.1
+        frontend:
+          artifacts:
+            baseDirectory: www/
+            files:
+              - '*'
+      Tags:
+        - Key: Name
+          Value: !Ref Domain
+      IAMServiceRole: !GetAtt AmplifyRole.Arn
+
+  AmplifyBranch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      BranchName: !Ref Branch
+      AppId: !GetAtt AmplifyApp.AppId
+      EnableAutoBuild: true
+      Tags:
+        - Key: Name
+          Value: !Ref Domain
+        - Key: Branch
+          Value: !Ref Branch
+
+  AmplifyDomain:
+    Type: AWS::Amplify::Domain
+    Properties:
+      DomainName: !Ref Domain
+      AppId: !GetAtt AmplifyApp.AppId
+      SubDomainSettings:
+        - Prefix: www
+          BranchName: !Ref Branch
+        - Prefix: ""
+          BranchName: !Ref Branch
+
+Outputs:
+  DefaultDomain:
+    Value: !GetAtt AmplifyApp.DefaultDomain
+
+  BranchUrl:
+    Value: !Join [ ".", [ !Ref Branch, !Ref Domain ]]
