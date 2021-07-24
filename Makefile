@@ -20,7 +20,7 @@ endif
 
 create: pac_check
 	aws cloudformation deploy \
-		--template-file ./cloudformation.template \
+		--template-file ./amplify-template.yml \
 		--capabilities CAPABILITY_IAM \
 		--parameter-overrides \
 			OauthToken=$(GITHUB_REPO_PAC) \
