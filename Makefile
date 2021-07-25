@@ -1,5 +1,5 @@
-CURRENT_DIR = $(notdir $(shell pwd))
-STACK_NAME  = dzansch
+CURRENT_DIR := $(notdir $(shell pwd))
+STACK_NAME  = $(shell echo $(CURRENT_DIR) | tr -d '.')
 
 pac_check:
 ifndef GITHUB_REPO_PAC
